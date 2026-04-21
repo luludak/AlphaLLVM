@@ -1,4 +1,6 @@
-# AlphaLLVM — A scripting language compiler, implemented in modern C++17 with an LLVM backend. Supports both JIT execution via OrcJIT and ahead-of-time compilation to native object files.
+# AlphaLLVM
+
+A scripting language compiler, implemented in modern C++17 with an LLVM backend. Supports both JIT execution via OrcJIT and ahead-of-time compilation to native object files.
 
 ---
 
