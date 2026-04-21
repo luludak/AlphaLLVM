@@ -1,6 +1,6 @@
-# AlphaLLVM — An Alpha PL compiler with LLVM Backend
+# AlphaLLVM — An AlphaPL compiler with LLVM Backend
 
-A complete compiler for the **Alpha** scripting language, implemented in modern C++17 with an LLVM backend. Supports both JIT execution via OrcJIT and ahead-of-time compilation to native object files.
+A complete compiler for the **AlphaPL** scripting language, implemented in modern C++17 with an LLVM backend. Supports both JIT execution via OrcJIT and ahead-of-time compilation to native object files.
 
 ---
 
@@ -255,6 +255,7 @@ docker run --rm -v $(pwd):/src alphac /src/test.alpha
 ```
 
 *Important Notes:*
-* This software was produced using Claude Code, as a proof-of-concept of creating a full compiler from scratch, and I used (to the best of my knowledge), information that is already available in public repositories, with no purpose for copyright infringement.
-* While I aim developing and improving the project, it is provided as-is, without guarantees.
-* I am **against** any usage of the project for plagiarism purposes. However, if you want to use it as the base for a tool to LEGITIMATELY learn how to build a compiler, then you can do so. I have no purpose for copyright infringement, and this is a derivation of work of code publicly available.
+* This software was produced using Claude Code, as a proof-of-concept of creating a full compiler from scratch, and I used (to the best of my knowledge), information that is already publicly available and without limitations.
+* While I aim developing and improving the project, it is provided AS-IS, without guarantees.
+* I am **against** any usage of the project for plagiarism purposes. However, if you want to use it as the base for a tool to LEGITIMATELY learn how to build a compiler, then you can do so.
+* I have no purpose for copyright infringement, and this is a derivation of work of code publicly available.
