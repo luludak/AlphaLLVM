@@ -1,0 +1,178 @@
+// ================================================================
+// examples/oop.alpha
+// Demonstrates a prototype-based OOP system built purely in Alpha.
+// Pattern: each "class" is a function returning a table (self).
+//          Methods are closures capturing self.
+//          Inheritance via manual delegation.
+// ================================================================
+
+// ================================================================
+// Base class: Shape
+// ================================================================
+function Shape(color) {
+    local self = [color: color];
+
+    function getColor() { return self.color; }
+    function describe() {
+        print("Shape color: " .. self.color .. ", area: " .. strtonum(self.area()));
+    }
+    // area() must be overridden by subclasses
+    function area() { return 0; }
+
+    self.getColor = getColor;
+    self.describe = describe;
+    self.area     = area;
+    return self;
+}
+
+// ================================================================
+// Subclass: Circle (inherits Shape)
+// ================================================================
+function Circle(color, radius) {
+    local self = Shape(color);   // "inherit" base
+    self.radius = radius;
+
+    // Override area
+    function circleArea() {
+        // pi approximation
+        local pi = 3.14159265358979;
+        return pi * self.radius * self.radius;
+    }
+    function circleDescribe() {
+        print("Circle r=" .. strtonum(self.radius) ..
+              " color=" .. self.color ..
+              " area=" .. strtonum(self.area()));
+    }
+
+    self.area     = circleArea;
+    self.describe = circleDescribe;
+    return self;
+}
+
+// ================================================================
+// Subclass: Rectangle
+// ================================================================
+function Rectangle(color, width, height) {
+    local self = Shape(color);
+    self.width  = width;
+    self.height = height;
+
+    function rectArea() {
+        return self.width * self.height;
+    }
+    function rectDescribe() {
+        print("Rectangle " .. strtonum(self.width) .. "x" ..
+              strtonum(self.height) ..
+              " color=" .. self.color ..
+              " area=" .. strtonum(self.area()));
+    }
+
+    self.area     = rectArea;
+    self.describe = rectDescribe;
+    return self;
+}
+
+// ================================================================
+// Subclass: Triangle
+// ================================================================
+function Triangle(color, base2, height) {
+    local self = Shape(color);
+    self.base2  = base2;
+    self.height = height;
+
+    function triArea() { return 0.5 * self.base2 * self.height; }
+    function triDescribe() {
+        print("Triangle base=" .. strtonum(self.base2) ..
+              " height=" .. strtonum(self.height) ..
+              " area=" .. strtonum(self.area()));
+    }
+
+    self.area     = triArea;
+    self.describe = triDescribe;
+    return self;
+}
+
+// ================================================================
+// Polymorphism demo: array of shapes
+// ================================================================
+shapes = [];
+shapes[0] = Circle("red",    5);
+shapes[1] = Rectangle("blue",  4, 6);
+shapes[2] = Triangle("green", 3, 8);
+shapes[3] = Circle("yellow", 2);
+shapes[4] = Rectangle("black", 10, 2);
+
+print("=== All shapes ===");
+for (i = 0; i < 5; i++) {
+    shapes[i].describe();
+}
+
+// Total area
+totalArea = 0;
+for (i = 0; i < 5; i++) {
+    totalArea = totalArea + shapes[i].area();
+}
+print("Total area: " .. strtonum(totalArea));
+
+// Find largest
+largest = shapes[0];
+for (i = 1; i < 5; i++) {
+    if (shapes[i].area() > largest.area()) {
+        largest = shapes[i];
+    }
+}
+print("Largest shape:");
+largest.describe();
+
+// ================================================================
+// Counter with inheritance demo
+// ================================================================
+function Counter(start, step) {
+    local self = [value: start, step: step];
+
+    function inc()   { self.value = self.value + self.step; return self.value; }
+    function dec()   { self.value = self.value - self.step; return self.value; }
+    function reset() { self.value = start; }
+    function get()   { return self.value; }
+
+    self.inc   = inc;
+    self.dec   = dec;
+    self.reset = reset;
+    self.get   = get;
+    return self;
+}
+
+function BoundedCounter(start, step, lo, hi) {
+    local self = Counter(start, step);
+    local baseInc = self.inc;
+    local baseDec = self.dec;
+
+    function boundedInc() {
+        local v = baseInc();
+        if (v > hi) { self.value = hi; }
+        return self.value;
+    }
+    function boundedDec() {
+        local v = baseDec();
+        if (v < lo) { self.value = lo; }
+        return self.value;
+    }
+
+    self.inc = boundedInc;
+    self.dec = boundedDec;
+    return self;
+}
+
+print("=== Bounded counter [0..5] step=1 ===");
+bc = BoundedCounter(0, 1, 0, 5);
+print(bc.inc());  // 1
+print(bc.inc());  // 2
+print(bc.inc());  // 3
+print(bc.inc());  // 4
+print(bc.inc());  // 5
+print(bc.inc());  // 5  (clamped)
+print(bc.inc());  // 5  (still clamped)
+print(bc.dec());  // 4
+print(bc.dec());  // 3
+bc.reset();
+print(bc.get());  // 0

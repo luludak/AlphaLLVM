@@ -1,0 +1,97 @@
+// ================================================================
+// examples/linked_list.alpha
+// Demonstrates: tables-as-objects, closures, recursion, iteration
+// ================================================================
+
+// ---- Linked list node constructor ----
+function Node(val, nxt) {
+    return [value: val, next: nxt];
+}
+
+// ---- Build list from array ----
+function listFromArray(arr, sz) {
+    local list = nil;
+    // Build in reverse so head is arr[0]
+    for (i = sz - 1; i >= 0; i--) {
+        list = Node(arr[i], list);
+    }
+    return list;
+}
+
+// ---- Print entire list ----
+function printList(node) {
+    while (node != nil) {
+        print(node.value);
+        node = node.next;
+    }
+}
+
+// ---- Length ----
+function length(node) {
+    local n = 0;
+    while (node != nil) {
+        n = n + 1;
+        node = node.next;
+    }
+    return n;
+}
+
+// ---- Map: apply fn to each element, return new list ----
+function mapList(node, fn) {
+    if (node == nil) { return nil; }
+    return Node(fn(node.value), mapList(node.next, fn));
+}
+
+// ---- Filter: keep elements where fn(elem) is true ----
+function filterList(node, fn) {
+    if (node == nil) { return nil; }
+    if (fn(node.value)) {
+        return Node(node.value, filterList(node.next, fn));
+    }
+    return filterList(node.next, fn);
+}
+
+// ---- Fold/reduce left ----
+function foldLeft(node, init, fn) {
+    if (node == nil) { return init; }
+    return foldLeft(node.next, fn(init, node.value), fn);
+}
+
+// ================================================================
+// Demo
+// ================================================================
+
+nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+list = listFromArray(nums, 10);
+
+print("Original list:");
+printList(list);
+
+print("Length: " .. strtonum(length(list)));
+
+// Double every element
+doubled = mapList(list, lambda(x) { return x * 2; });
+print("Doubled:");
+printList(doubled);
+
+// Keep only evens
+evens = filterList(list, lambda(x) { return x % 2 == 0; });
+print("Evens only:");
+printList(evens);
+
+// Sum via fold
+total = foldLeft(list, 0, lambda(acc, x) { return acc + x; });
+print("Sum 1..10 = " .. strtonum(total));   // 55
+
+// Product via fold
+product = foldLeft(list, 1, lambda(acc, x) { return acc * x; });
+print("Product 1..10 = " .. strtonum(product));  // 3628800
+
+// Compose: filter evens, then square them, then sum
+evenSquareSum = foldLeft(
+    mapList(filterList(list, lambda(x) { return x % 2 == 0; }),
+            lambda(x) { return x * x; }),
+    0,
+    lambda(acc, x) { return acc + x; }
+);
+print("Sum of squares of evens = " .. strtonum(evenSquareSum));  // 4+16+36+64+100=220

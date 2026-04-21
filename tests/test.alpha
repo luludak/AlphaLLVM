@@ -1,0 +1,197 @@
+// ================================================================
+// test.alpha — Comprehensive Alpha language test suite
+// ================================================================
+
+// ---- 1. Arithmetic ----
+print(1 + 2);          // 3
+print(10 - 3);         // 7
+print(4 * 5);          // 20
+print(7 / 2);          // 3.5
+print(10 % 3);         // 1
+print(-5 + 3);         // -2
+
+// ---- 2. String concatenation (..) ----
+hello = "Hello";
+print(hello .. ", " .. "World" .. "!");   // Hello, World!
+
+// ---- 3. Boolean logic ----
+print(true and true);    // true
+print(true and false);   // false
+print(false or true);    // true
+print(not true);         // false
+print(not false);        // true
+
+// ---- 4. Comparisons ----
+print(3 < 5);    // true
+print(5 > 3);    // true
+print(3 <= 3);   // true
+print(4 >= 5);   // false
+print(3 == 3);   // true
+print(3 != 4);   // true
+print("abc" == "abc"); // true
+print("abc" == "xyz"); // false
+
+// ---- 5. Increment / decrement ----
+x = 10;
+x++;
+print(x);        // 11
+++x;
+print(x);        // 12
+x--;
+print(x);        // 11
+print(x--);      // 11 (post, returns old)
+print(x);        // 10
+
+// ---- 6. If / else ----
+if (x > 5) {
+    print("big");
+} else {
+    print("small");
+}              // big
+
+// ---- 7. While loop with break ----
+i = 0;
+s = 0;
+while (i < 5) {
+    s = s + i;
+    i++;
+}
+print(s);    // 10
+
+n = 0;
+while (true) {
+    n++;
+    if (n == 7) { break; }
+}
+print(n);   // 7
+
+// ---- 8. For loop ----
+total = 0;
+for (j = 1; j <= 100; j++) {
+    total = total + j;
+}
+print(total);  // 5050
+
+// ---- 9. Continue ----
+evens = 0;
+for (k = 1; k <= 10; k++) {
+    if (k % 2 != 0) { continue; }
+    evens = evens + k;
+}
+print(evens);  // 30
+
+// ---- 10. Recursive factorial ----
+function fact(n) {
+    if (n <= 1) { return 1; }
+    return n * fact(n - 1);
+}
+print(fact(5));   // 120
+print(fact(10));  // 3628800
+
+// ---- 11. Fibonacci ----
+function fib(n) {
+    if (n <= 0) { return 0; }
+    if (n == 1) { return 1; }
+    return fib(n-1) + fib(n-2);
+}
+print(fib(10));   // 55
+
+// ---- 12. Closures ----
+function makeAdder(n) {
+    function adder(x) {
+        return x + n;
+    }
+    return adder;
+}
+add5 = makeAdder(5);
+print(add5(3));    // 8
+print(add5(10));   // 15
+
+// ---- 13. Tables ----
+arr = [10, 20, 30, 40, 50];
+print(arr[0]);     // 10
+print(arr[4]);     // 50
+arr[2] = 99;
+print(arr[2]);     // 99
+
+point = [x: 3, y: 4];
+print(point.x);    // 3
+print(point.y);    // 4
+point.z = 0;
+print(point.z);    // 0
+
+// ---- 14. Lambda & higher-order functions ----
+square = lambda(n) { return n * n; };
+print(square(7));        // 49
+print(square(square(2))); // 16
+
+function map(tbl, sz, fn) {
+    result = [];
+    for (ii = 0; ii < sz; ii++) {
+        result[ii] = fn(tbl[ii]);
+    }
+    return result;
+}
+nums = [1, 2, 3, 4, 5];
+doubled = map(nums, 5, lambda(x) { return x * 2; });
+for (ii = 0; ii < 5; ii++) {
+    print(doubled[ii]);   // 2 4 6 8 10
+}
+
+// ---- 15. typeof ----
+print(typeof(nil));      // nil
+print(typeof(42));       // number
+print(typeof("hi"));     // string
+print(typeof(true));     // boolean
+print(typeof([]));       // table
+print(typeof(square));   // userfunc
+
+// ---- 16. Math library ----
+print(sqrt(16));     // 4
+print(strtonum("3.14"));   // 3.14
+
+// ---- 17. Table as object (OOP) ----
+function makeCounter(start) {
+    local self = [count: start];
+    function inc()   { self.count = self.count + 1; return self.count; }
+    function dec()   { self.count = self.count - 1; return self.count; }
+    function reset() { self.count = start; }
+    self.inc   = inc;
+    self.dec   = dec;
+    self.reset = reset;
+    return self;
+}
+c = makeCounter(0);
+print(c.inc());   // 1
+print(c.inc());   // 2
+print(c.inc());   // 3
+print(c.dec());   // 2
+c.reset();
+print(c.count);   // 0
+
+// ---- 18. Mutual recursion ----
+function isEven(n) {
+    if (n == 0) { return true; }
+    return isOdd(n - 1);
+}
+function isOdd(n) {
+    if (n == 0) { return false; }
+    return isEven(n - 1);
+}
+print(isEven(4));   // true
+print(isOdd(7));    // true
+print(isEven(0));   // true
+print(isOdd(0));    // false
+
+// ---- 19. String equality ----
+a = "hello";
+b = "hello";
+c2 = "world";
+print(a == b);    // true
+print(a == c2);   // false
+print(a != c2);   // true
+
+// ---- 20. Nil handling ----
+v = nil;
+print(v == nil);     // true
+if (v == nil) { print("is nil"); }  // is nil

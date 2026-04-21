@@ -1,0 +1,137 @@
+// ================================================================
+// examples/mergesort.alpha
+// Demonstrates: recursive algorithms, table manipulation,
+//               nested functions, complex control flow
+// ================================================================
+
+// ---- Utility: print array of given size ----
+function printArray(arr, sz) {
+    local s = "[";
+    for (i = 0; i < sz; i++) {
+        s = s .. strtonum(arr[i]);
+        if (i < sz - 1) { s = s .. ", "; }
+    }
+    s = s .. "]";
+    print(s);
+}
+
+// ---- Utility: copy slice of src into dst ----
+function copySlice(src, dst, start, end2) {
+    for (i = start; i < end2; i++) {
+        dst[i] = src[i];
+    }
+}
+
+// ---- Merge two sorted halves in-place (using temp array) ----
+function merge(arr, tmp, left, mid, right) {
+    // Copy both halves into tmp
+    for (i = left; i < right; i++) {
+        tmp[i] = arr[i];
+    }
+
+    local i = left;
+    local j = mid;
+    local k = left;
+
+    while (i < mid and j < right) {
+        if (tmp[i] <= tmp[j]) {
+            arr[k] = tmp[i];
+            i++;
+        } else {
+            arr[k] = tmp[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < mid) {
+        arr[k] = tmp[i];
+        i++;
+        k++;
+    }
+    while (j < right) {
+        arr[k] = tmp[j];
+        j++;
+        k++;
+    }
+}
+
+// ---- Recursive merge sort ----
+function mergesortImpl(arr, tmp, left, right) {
+    if (right - left <= 1) { return; }
+    local mid = floor(left + (right - left) / 2);
+    mergesortImpl(arr, tmp, left, mid);
+    mergesortImpl(arr, tmp, mid, right);
+    merge(arr, tmp, left, mid, right);
+}
+
+function mergesort(arr, sz) {
+    local tmp = [];
+    mergesortImpl(arr, tmp, 0, sz);
+}
+
+// ================================================================
+// Demo 1: sort integers
+// ================================================================
+data = [38, 27, 43, 3, 9, 82, 10];
+sz = 7;
+print("Before sort:");
+printArray(data, sz);
+mergesort(data, sz);
+print("After sort:");
+printArray(data, sz);
+
+// ================================================================
+// Demo 2: sort already-sorted (best case)
+// ================================================================
+sorted = [1, 2, 3, 4, 5, 6, 7, 8];
+mergesort(sorted, 8);
+print("Already sorted:");
+printArray(sorted, 8);
+
+// ================================================================
+// Demo 3: reverse sorted (worst case for naive sorts)
+// ================================================================
+rev = [9, 8, 7, 6, 5, 4, 3, 2, 1];
+mergesort(rev, 9);
+print("Reverse sorted:");
+printArray(rev, 9);
+
+// ================================================================
+// Demo 4: single element and two elements
+// ================================================================
+one = [42];
+mergesort(one, 1);
+print("Single element:");
+printArray(one, 1);
+
+two = [7, 3];
+mergesort(two, 2);
+print("Two elements:");
+printArray(two, 2);
+
+// ================================================================
+// Demo 5: verify order with assertion helper
+// ================================================================
+function isSorted(arr, sz) {
+    for (i = 0; i < sz - 1; i++) {
+        if (arr[i] > arr[i+1]) { return false; }
+    }
+    return true;
+}
+
+big = [];
+// Fill with pseudo-random values (LCG: xn+1 = (a*xn + c) % m)
+local seed = 12345;
+local a = 1664525;
+local c = 1013904223;
+local m = 65536;
+for (i = 0; i < 50; i++) {
+    seed = (a * seed + c) % m;
+    big[i] = seed % 1000;
+}
+mergesort(big, 50);
+if (isSorted(big, 50)) {
+    print("50-element sort: PASS");
+} else {
+    print("50-element sort: FAIL");
+}
