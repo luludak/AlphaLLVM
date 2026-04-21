@@ -1,6 +1,26 @@
-# AlphaLLVM Compiler — An Alpha PL implementation with LLVM Backend
+# AlphaLLVM — An Alpha PL compiler with LLVM Backend
 
-A complete compiler for the **AlphaLLVM** language, implemented in modern C++17 with an **LLVM IR** backend.
+A complete compiler for the **Alpha** scripting language, implemented in modern C++17 with an LLVM backend. Supports both JIT execution via OrcJIT and ahead-of-time compilation to native object files.
+
+---
+
+## Features
+
+* **OrcJIT execution** — `--run` compiles and executes Alpha programs in-process via LLVM OrcJIT; no intermediate files, no child processes, full native speed
+* **AOT compilation** — `--emit-llvm` and `--emit-obj` produce LLVM IR or native object files for static linking and distribution
+* **Dynamic typing** — all values are runtime-tagged (`nil`, `number`, `string`, `boolean`, `table`, `userfunc`) with automatic type coercion for string concatenation
+* **First-class functions** — functions are values; can be stored in variables, passed as arguments, returned from functions, and stored in tables
+* **Closures** — inner functions capture variables from outer scopes; captured variables are automatically promoted to shared storage across function boundaries
+* **Mutual recursion** — functions are pre-registered before their bodies are compiled; `isEven` can call `isOdd` and vice versa without forward declarations
+* **Prototype-based OOP** — objects are tables with function fields; inheritance and method dispatch implemented via closure-captured `self` references
+* **Tables** — first-class hash maps supporting positional, named-key (`[name: value]`), and computed-key (`[expr: value]`) construction; used as arrays, dictionaries, and objects
+* **Full control flow** — `if/else`, `while`, `for`, `break`, `continue`, `return` with correct short-circuit evaluation for `and`/`or`
+* **String concatenation** — `..` operator with automatic coercion of any value to string
+* **Math library** — built-in `sqrt`, `sin`, `cos`, `floor`, `ceil`, `abs`, `max`, `min`
+* **Scoping** — `local` declarations, `::global` forced lookups, and lexical scoping with function nesting depth tracking
+* **Optimization** — LLVM `PassBuilder` pipeline at `-O0`, `-O1`, `-O2`; `mem2reg` promotes stack slots to SSA registers eliminating redundant loads/stores
+* **Symbol table** — full scoped symbol table with function nesting levels, formal parameter tracking, and library function shadow detection
+* **Phases 1–4** — complete pipeline: Flex lexer → Bison LALR(1) parser → semantic analyzer → LLVM IR codegen, each independently inspectable via `--dump-ast` and `--dump-symbols`
 
 ---
 
@@ -10,58 +30,158 @@ A complete compiler for the **AlphaLLVM** language, implemented in modern C++17 
 Source (.alpha)
     │
     ▼
-Phase 1+2: Flex Lexer + Bison Parser
+Flex Lexer + Bison Parser
     │  → AST (ast.h)
     ▼
-Phase 3: Semantic Analyzer + Symbol Table
+Semantic Analyzer + Symbol Table
     │  → Scoped SymbolTable with function nesting (symtable.h, semantic.h)
     ▼
-Phase 4: LLVM IR Code Generator
-    │  → LLVM Module (codegen.h)
+LLVM IR Code Generator
+    │  → LLVM Module in memory (codegen.h)
     ▼
-Phase 5: LLVM → Native (via llc + clang)
-    │  Linked with alpha_runtime.c
-    ▼
-Native Executable
+    ├─── --run ──────────────────────────────────────────────────────┐
+    │                                                                │
+    │   OrcJIT (inside alphac)                                       │
+    │     ├─ LLVM backend: instruction selection,                    │
+    │     │  register allocation, machine code emission              │
+    │     ├─ Symbol resolution: alpha_rt_* resolved from             │
+    │     │  alphac's own address space (statically linked)          │
+    │     └─ fn() ← native machine code runs in-process              │
+    │                                                                │
+    └─── --emit-llvm / --emit-obj ───────────────────────────────────┘
+                                                                     │
+        alphac writes .ll or .o to disk                              │
+            │                                                        │
+            ▼                                                        │
+        llc + clang (external tools)                                 │
+            │  Linked with alpha_runtime.c                           │
+            ▼                                                        │
+        Native Executable                                            │
+            │                                                        │
+            └────────────────────────────────────────────────────────┘
+                                                                     │
+                                                                     ▼
+                                                             Program Output
 ```
 
 ---
 
-## Language Features
+## File Reference
 
-Alpha is a dynamically typed scripting language:
-
-| Feature         | Syntax example                          |
-|-----------------|----------------------------------------|
-| Types           | `nil`, `number`, `string`, `bool`, `table`, `function` |
-| Variables       | `x = 10;`  `local x = 5;`  `::globalX` |
-| Arithmetic      | `+ - * / %`                             |
-| Comparison      | `== != < > <= >=`                       |
-| Logic           | `and or not`                            |
-| Increment       | `++x  x++  --x  x--`                   |
-| Conditionals    | `if (cond) { } else { }`               |
-| Loops           | `while (c) {}` `for (i=0; i<n; i++) {}` |
-| Functions       | `function f(a, b) { return a+b; }`     |
-| Lambdas         | `lambda(x) { return x*x; }`           |
-| Tables          | `[1,2,3]`  `[k: v, ...]`  `t.field`   |
-| Globals         | `::x` — forced global lookup           |
-| Locals          | `local x` — force local scope          |
-| Library         | `print input typeof strtonum sqrt`     |
+| File | Role |
+|---|---|
+| `src/lexer.l` | Flex scanner — all tokens, nested `/* */` comments, string escape sequences |
+| `src/parser.y` | Bison LALR(1) grammar — full Alpha syntax, builds typed AST |
+| `src/ast.h` | AST node definition with `unique_ptr` ownership |
+| `src/symtable.h` | Scoped hash-map symbol table with function nesting level tracking |
+| `src/semantic.h` | Semantic pass — scoping rules, error detection, symbol population |
+| `src/codegen.h` | LLVM IR code generator — all statements, expressions, closures, tables |
+| `src/alpha_runtime.c` | C runtime — heap-allocated values, tables, print, math, equality |
+| `src/main.cpp` | Compiler driver — CLI, phase orchestration, OrcJIT execution |
+| `CMakeLists.txt` | CMake build supporting LLVM 14–22+ |
+| `Makefile` | GNU Make fallback |
+| `Dockerfile` | Reproducible build container |
+| `alpha-run.sh` | Shell script for JIT (`--run`) and AOT (`--aot`) pipelines |
+| `test.alpha` | 20-section test covering every language feature |
+| `examples/linked_list.alpha` | Linked list with `map`, `filter`, `foldLeft` |
+| `examples/mergesort.alpha` | In-place merge sort with randomized correctness check |
+| `examples/oop.alpha` | Prototype-based OOP — shapes, method override, bounded counter |
 
 ---
 
-## Runtime Value Representation (LLVM)
+## Language
 
-Every Alpha value is a heap-allocated `AlphaVal`:
+Alpha is a dynamically typed scripting language. Every value is one of:
+
+| Type | Example |
+|---|---|
+| `nil` | `nil` |
+| `number` | `42`, `3.14` |
+| `string` | `"hello"` |
+| `boolean` | `true`, `false` |
+| `table` | `[1, 2, 3]`, `[x: 10, y: 20]` |
+| `userfunc` | `function f(x) { return x; }` |
+
+### Syntax quick reference
+
+```alpha
+// Variables
+x = 10;
+local y = 20;     // local to current scope
+::z = 30;         // force global scope
+
+// Control flow
+if (x > 5) { print("big"); } else { print("small"); }
+while (x > 0) { x--; }
+for (i = 0; i < 10; i++) { print(i); }
+
+// Functions
+function add(a, b) { return a + b; }
+square = lambda(x) { return x * x; };
+
+// Tables
+arr = [1, 2, 3];
+obj = [name: "Alice", age: 30];
+obj.age = 31;
+print(arr[0]);
+print(obj.name);
+
+// String concatenation (auto-coerces numbers)
+print("value = " .. 42);
+
+// Closures
+function makeCounter(n) {
+    function inc() { n = n + 1; return n; }
+    return inc;
+}
+c = makeCounter(0);
+print(c());   // 1
+print(c());   // 2
+
+// OOP via tables
+function Animal(name) {
+    local self = [name: name];
+    function speak() { print(self.name .. " speaks"); }
+    self.speak = speak;
+    return self;
+}
+a = Animal("Dog");
+a.speak();
+```
+
+### Built-in functions
+
+| Function | Description |
+|---|---|
+| `print(v)` | Print value followed by newline |
+| `input()` | Read line from stdin, returns string |
+| `typeof(v)` | Returns type name as string |
+| `tostring(v)` | Convert any value to string |
+| `sqrt(n)` | Square root |
+| `sin(n)` / `cos(n)` | Trigonometry |
+| `floor(n)` / `ceil(n)` | Rounding |
+| `abs(n)` | Absolute value |
+| `max(a,b)` / `min(a,b)` | Numeric min/max |
+| `objectmemberkeys(t)` | Table of all keys |
+| `objecttotalmembers(t)` | Number of entries |
+| `objectcopy(t)` | Shallow copy of table |
+
+---
+
+## Runtime
+
+The compiler uses a **custom C runtime** (`alpha_runtime.c`) statically linked into `alphac`. Every Alpha value is a heap-allocated `AlphaVal`:
 
 ```c
-struct AlphaVal {
-    int32_t tag;    // 0=nil 1=number 2=string 3=bool 4=table 5=userfunc
-    int64_t data;   // double bits / ptr / bool
-};
+typedef struct AlphaVal {
+    int32_t tag;   // 0=nil 1=number 2=string 3=bool 4=table 5=userfunc
+    int64_t data;  // double bits / pointer cast to int64
+} AlphaVal;
 ```
 
-All generated LLVM functions take and return `AlphaVal*`.
+When running with `--run`, the OrcJIT engine resolves all `alpha_rt_*` symbols directly from `alphac`'s own address space — no dynamic linking or file I/O required.
+
+Tables are implemented as open-addressing hash maps with 0.7 load factor and automatic resizing.
 
 ---
 
@@ -70,18 +190,19 @@ All generated LLVM functions take and return `AlphaVal*`.
 ### Prerequisites
 
 ```bash
-# Ubuntu/Debian
+# Ubuntu / Debian
 sudo apt install flex bison llvm-dev clang cmake build-essential
 
 # macOS (Homebrew)
-brew install flex bison llvm cmake
+brew install llvm flex bison cmake
 ```
 
 ### CMake (recommended)
 
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release \
+         -DLLVM_DIR=$(brew --prefix llvm)/lib/cmake/llvm   # macOS only
 make -j$(nproc)
 ```
 
@@ -96,79 +217,44 @@ make -j$(nproc)
 ## Usage
 
 ```bash
-# Compile Alpha source to LLVM IR
-./alphac --emit-llvm program.alpha
+# JIT: compile and run immediately (no files written)
+./alphac --run program.alpha
 
-# Compile to object file
+# Emit LLVM IR
+./alphac --emit-llvm program.alpha        # writes program.ll
+
+# Emit native object file
 ./alphac --emit-obj -o program.o program.alpha
 
-# Dump AST
-./alphac --dump-ast program.alpha
+# AOT full pipeline (requires llc + clang)
+./alpha-run.sh --aot program.alpha
 
-# Dump symbol table
-./alphac --dump-symbols program.alpha
+# Debug flags
+./alphac --run --dump-ast program.alpha
+./alphac --run --dump-symbols program.alpha
 
-# Full pipeline: Alpha → native binary
-./alphac --emit-llvm program.alpha
-llc -filetype=obj -o program.o program.ll
-clang program.o libalpharuntime.a -lm -o program
-./program
-
-# Or use the Makefile shortcut:
-make run SRC=test.alpha
+# Optimization level (default: -O1)
+./alphac --run -O0 program.alpha
+./alphac --run -O2 program.alpha
 ```
 
----
+### Run the examples
 
-## Compiler Phases
-
-### Phase 1 — Lexer (`lexer.l`)
-Flex-based scanner. Tokens: keywords, identifiers, integers, floats, strings (with escape sequences), operators, nested block comments `/* ... */`, line comments `//`.
-
-### Phase 2 — Parser (`parser.y`)
-LALR(1) Bison grammar. Produces a typed AST (`ast.h`). Handles:
-- Full operator precedence
-- `if/else`, `while`, `for`, `break`, `continue`, `return`
-- Named and anonymous functions, lambdas
-- Table constructors (positional, named, computed-key)
-- Scoped identifiers (`local`, `::`)
-
-### Phase 3 — Semantic Analysis (`semantic.h`, `symtable.h`)
-- Scoped symbol table (hash map per scope frame, scope stack)
-- Function nesting level tracking
-- Formal parameter binding
-- `break`/`continue` outside loop detection
-- `return` outside function detection
-- Library function shadow prevention
-- Auto-declaration of undeclared variables (Alpha is dynamic)
-
-### Phase 4 — LLVM IR Codegen (`codegen.h`)
-- `AlphaVal` struct type with tag-union representation
-- All variables as `alloca`'d `AlphaVal**` with flat scope environments
-- Full control flow: `if`, `while`, `for`, short-circuit `and`/`or`
-- Function definitions → LLVM `Function` objects with `AlphaVal*` ABI
-- Lambda closures → anonymous LLVM functions
-- Table operations → calls to `alpha_rt_table_*`
-- Arithmetic/comparison on extracted double values
-- Pre/post increment/decrement
-
-### Phase 5 — Native Execution
-The LLVM IR module is:
-1. Written to `.ll` (or compiled to `.o` directly via the LLVM `PassManager`)
-2. Linked with `alpha_runtime.c` (the C runtime: `print`, `input`, table GC, etc.)
-3. Executed natively
-
----
-
-## Symbol Table Design
-
-```
-Scope 0 (global): {lib funcs, global vars}
-  └─ Scope 1 (block): {local vars}
-       └─ Scope 2 (function): {formals, locals}  ← funcNestLevel++
-            └─ Scope 3 (inner block): ...
+```bash
+./alphac --run test.alpha
+./alphac --run examples/mergesort.alpha
+./alphac --run examples/linked_list.alpha
+./alphac --run examples/oop.alpha
 ```
 
-- Each `Symbol` carries: name, kind, scopeLevel, funcNestLevel, offset, line
-- `offset` = slot index in the function's local/formal array (useful for VM codegen)
-- On scope exit, symbols are **deactivated** (not deleted) for post-analysis dumps
+### Docker (no local LLVM required)
+
+```bash
+docker build -t alphac .
+docker run --rm -v $(pwd):/src alphac /src/test.alpha
+```
+
+*Important Notes:*
+* This software was produced using Claude Code, as a proof-of-concept of creating a full compiler from scratch, and I used (to the best of my knowledge), information that is already available in public repositories, with no purpose for copyright infringement.
+* While I aim developing and improving the project, it is provided as-is, without guarantees.
+* I am **against** any usage of the project for plagiarism purposes. However, if you want to use it as the base for a tool to LEGITIMATELY learn how to build a compiler, then you can do so. I have no purpose for copyright infringement, and this is a derivation of work of code publicly available.
