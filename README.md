@@ -20,7 +20,7 @@ A scripting language compiler, implemented in modern C++17 with an LLVM backend.
 * **Scoping** — `local` declarations, `::global` forced lookups, and lexical scoping with function nesting depth tracking
 * **Optimization** — LLVM `PassBuilder` pipeline at `-O0`, `-O1`, `-O2`; `mem2reg` promotes stack slots to SSA registers eliminating redundant loads/stores
 * **Symbol table** — full scoped symbol table with function nesting levels, formal parameter tracking, and library function shadow detection
-* **Phases 1–4** — complete pipeline: Flex lexer → Bison LALR(1) parser → semantic analyzer → LLVM IR codegen, each independently inspectable via `--dump-ast` and `--dump-symbols`
+* **Complete pipeline** - Flex lexer → Bison LALR(1) parser → semantic analyzer → LLVM IR codegen, each independently inspectable via `--dump-ast` and `--dump-symbols`
 
 ---
 
