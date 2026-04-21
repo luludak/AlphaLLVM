@@ -94,6 +94,9 @@ target_link_libraries(alpha_runtime PUBLIC m)
 # ── alphac executable ─────────────────────────────────────────
 add_executable(alphac
     src/main.cpp
+    src/symtable.cpp
+    src/semantic.cpp
+    src/codegen.cpp
     ${BISON_AlphaParser_OUTPUTS}
     ${FLEX_AlphaLexer_OUTPUTS}
 )
