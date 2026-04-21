@@ -255,8 +255,8 @@ docker run --rm -v $(pwd):/src alphac /src/test.alpha
 ```
 
 *Important Notes:*
-* This software was produced using Claude Code, as a proof-of-concept of creating a full compiler from scratch. It has not been tested to production-level code.
+* This software was produced using Claude Code (Opus 4.6). It has not been tested to production-level code.
 * While I aim developing and improving the project, it is provided AS-IS, without guarantees.
 * The concept of this project is inspired (although completely changed) by the compilers project I had implemented at CSD - UoC.
 * I used, to the best of my knowledge, only information that is already publicly available and without limitations (e.g., language syntax), as well as information from code that was my own.
-* I am **against** any usage of the project for plagiarism purposes. However, if you want to use it as the base for a tool to LEGITIMATELY learn how to build a compiler, then you can do so.
+* I am **against** any usage of the project for plagiarism purposes (e.g., copying it arbitrarily on university projects). However, if you want to use it as the base for a tool to LEGITIMATELY learn how to build a compiler, then you can do so.
