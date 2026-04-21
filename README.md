@@ -68,24 +68,27 @@ LLVM IR Code Generator
 
 ## File Reference
 
-| File | Role |
-|---|---|
-| `src/lexer.l` | Flex scanner — all tokens, nested `/* */` comments, string escape sequences |
-| `src/parser.y` | Bison LALR(1) grammar — full Alpha syntax, builds typed AST |
-| `src/ast.h` | AST node definition with `unique_ptr` ownership |
-| `src/symtable.h` | Scoped hash-map symbol table with function nesting level tracking |
-| `src/semantic.h` | Semantic pass — scoping rules, error detection, symbol population |
-| `src/codegen.h` | LLVM IR code generator — all statements, expressions, closures, tables |
-| `src/alpha_runtime.c` | C runtime — heap-allocated values, tables, print, math, equality |
-| `src/main.cpp` | Compiler driver — CLI, phase orchestration, OrcJIT execution |
-| `CMakeLists.txt` | CMake build supporting LLVM 14–22+ |
-| `Makefile` | GNU Make fallback |
-| `Dockerfile` | Reproducible build container |
-| `alpha-run.sh` | Shell script for JIT (`--run`) and AOT (`--aot`) pipelines |
-| `test.alpha` | 20-section test covering every language feature |
-| `examples/linked_list.alpha` | Linked list with `map`, `filter`, `foldLeft` |
-| `examples/mergesort.alpha` | In-place merge sort with randomized correctness check |
-| `examples/oop.alpha` | Prototype-based OOP — shapes, method override, bounded counter |
+| File | Lines | Role |
+|---|---|---|
+| `src/ast.h` | 54 | AST node definition — data structures and enums only, no method bodies |
+| `src/symtable.h` | 68 | Symbol table class declarations |
+| `src/symtable.cpp` | 147 | `SymbolTable`, `Scope`, `Symbol` implementations |
+| `src/semantic.h` | 34 | Semantic analyzer class declaration |
+| `src/semantic.cpp` | 157 | All `SemanticAnalyzer` method implementations |
+| `src/codegen.h` | 182 | LLVM codegen class declaration, member variables, private method signatures |
+| `src/codegen.cpp` | 716 | All `LLVMCodeGen` method implementations |
+| `src/alpha_runtime.c` | 434 | C runtime — heap-allocated values, tables, print, math, equality |
+| `src/main.cpp` | 381 | Compiler driver — CLI, phase orchestration, OrcJIT execution |
+| `src/lexer.l` | 109 | Flex scanner — all tokens, nested `/* */` comments, string escapes |
+| `src/parser.y` | 469 | Bison LALR(1) grammar — full Alpha syntax, builds typed AST |
+| `CMakeLists.txt` | 114 | CMake build supporting LLVM 14–22+ |
+| `Makefile` | 80 | GNU Make fallback |
+| `Dockerfile` | 33 | Reproducible build container |
+| `alpha-run.sh` | 80 | Shell script for JIT (`--run`) and AOT (`--aot`) pipelines |
+| `test.alpha` | 197 | 20-section test covering every language feature |
+| `examples/linked_list.alpha` | 97 | Linked list with `map`, `filter`, `foldLeft` |
+| `examples/mergesort.alpha` | 137 | In-place merge sort with randomized correctness check |
+| `examples/oop.alpha` | 178 | Prototype-based OOP — shapes, method override, bounded counter |
 
 ---
 
