@@ -162,6 +162,7 @@ a.speak();
 | `typeof(v)` | Returns type name as string |
 | `tostring(v)` | Convert any value to string |
 | `sqrt(n)` | Square root |
+| `pow(n, p)` | Power |
 | `sin(n)` / `cos(n)` | Trigonometry |
 | `floor(n)` / `ceil(n)` | Rounding |
 | `abs(n)` | Absolute value |
@@ -169,6 +170,8 @@ a.speak();
 | `objectmemberkeys(t)` | Table of all keys |
 | `objecttotalmembers(t)` | Number of entries |
 | `objectcopy(t)` | Shallow copy of table |
+| `strlen(s)` | Length of a string in characters |
+| `strchar(s, i)` | Single character of string at index i |
 
 ---
 
