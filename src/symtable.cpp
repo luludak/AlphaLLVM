@@ -38,7 +38,9 @@ SymbolTable::SymbolTable() {
     scopes_.push_back(std::make_unique<Scope>(0, false));
     for (auto lib : {"print", "input", "objectmemberkeys", "objecttotalmembers",
                      "objectcopy", "totalarguments", "argument", "typeof",
-                     "strtonum", "sqrt", "cos", "sin"}) {
+                     "strtonum", "tostring",
+                     "sqrt", "cos", "sin", "pow",
+                     "floor", "ceil", "abs", "max", "min"}) {
         auto sym = std::make_shared<Symbol>();
         sym->name = lib;
         sym->kind = SymbolKind::LibraryFunction;
