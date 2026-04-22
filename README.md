@@ -262,6 +262,7 @@ docker build -t alphac .
 docker run --rm -v $(pwd):/src alphac /src/test.alpha
 ```
 
+---
 
 ## Lines of Code
 ```
@@ -280,6 +281,8 @@ make                             1             22             17             53
 SUM:                            14            360            163           2721
 -------------------------------------------------------------------------------
 ```
+
+---
 
 *Important Notes:*
 * This software was produced using Claude Code (Sonnet 4.6). It has not been tested to production-level code.
