@@ -59,6 +59,8 @@ extern "C" {
     void*     alpha_rt_max(void*, void*);
     void*     alpha_rt_min(void*, void*);
     void*     alpha_rt_pow(void*, void*);
+    void*     alpha_rt_strlen(void*);
+    void*     alpha_rt_strchar(void*, void*);
     int       alpha_rt_val_eq(void*, void*);
     int       alpha_rt_val_neq(void*, void*);
     void*     alpha_rt_objectmemberkeys(void*);
@@ -180,6 +182,8 @@ static int runWithOrcJIT(LLVMCodeGen& cg, int /*optLevel*/) {
     REG_SYM(alpha_rt_max)
     REG_SYM(alpha_rt_min)
     REG_SYM(alpha_rt_pow)
+    REG_SYM(alpha_rt_strlen)
+    REG_SYM(alpha_rt_strchar)
     REG_SYM(alpha_rt_val_eq)
     REG_SYM(alpha_rt_val_neq)
     REG_SYM(alpha_rt_objectmemberkeys)

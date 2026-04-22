@@ -287,7 +287,11 @@ AlphaVal* alpha_rt_typeof(AlphaVal* v) {
 }
 
 AlphaVal* alpha_rt_strtonum(AlphaVal* s) {
-    if (!s || s->tag != TAG_STRING) return av_nil();
+    if (!s) return av_nil();
+    /* Number -> convert to string (idiomatic use in Alpha programs) */
+    if (s->tag == TAG_NUMBER) return alpha_rt_tostring(s);
+    /* String -> convert to number */
+    if (s->tag != TAG_STRING) return av_nil();
     const char* str = av_tostr_raw(s);
     if (!str) return av_nil();
     char* end;
@@ -401,7 +405,25 @@ AlphaVal* alpha_rt_pow(AlphaVal* base, AlphaVal* exp) {
     return av_number(pow(b, e));
 }
 
-/* ---- totalarguments / argument: no variadic support yet, stubs ---- */
+/* ---- string utilities ---- */
+AlphaVal* alpha_rt_strlen(AlphaVal* s) {
+    if (!s || s->tag != TAG_STRING) return av_number(0);
+    const char* str = av_tostr_raw(s);
+    return av_number(str ? (double)strlen(str) : 0.0);
+}
+/* Return single character at index i as a string */
+AlphaVal* alpha_rt_strchar(AlphaVal* s, AlphaVal* idx) {
+    if (!s || s->tag != TAG_STRING) return av_string("");
+    if (!idx || idx->tag != TAG_NUMBER) return av_string("");
+    const char* str = av_tostr_raw(s);
+    if (!str) return av_string("");
+    double d; memcpy(&d, &idx->data, sizeof(double));
+    int i = (int)d;
+    int len = (int)strlen(str);
+    if (i < 0 || i >= len) return av_string("");
+    char buf[2] = { str[i], '\0' };
+    return av_string(buf);
+}
 AlphaVal* alpha_rt_totalarguments(void) { return av_number(0); }
 AlphaVal* alpha_rt_argument(AlphaVal* idx) { (void)idx; return av_nil(); }
 

@@ -40,7 +40,8 @@ SymbolTable::SymbolTable() {
                      "objectcopy", "totalarguments", "argument", "typeof",
                      "strtonum", "tostring",
                      "sqrt", "cos", "sin", "pow",
-                     "floor", "ceil", "abs", "max", "min"}) {
+                     "floor", "ceil", "abs", "max", "min",
+                     "strlen", "strchar"}) {
         auto sym = std::make_shared<Symbol>();
         sym->name = lib;
         sym->kind = SymbolKind::LibraryFunction;

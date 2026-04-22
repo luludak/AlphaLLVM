@@ -71,6 +71,8 @@ public:
     llvm::Function* rtMax_      = nullptr;
     llvm::Function* rtMin_      = nullptr;
     llvm::Function* rtPow_      = nullptr;
+    llvm::Function* rtStrLen_   = nullptr;
+    llvm::Function* rtStrChar_  = nullptr;
     llvm::Function* rtMakeNil_  = nullptr;
     llvm::Function* rtMakeNum_  = nullptr;
     llvm::Function* rtMakeBool_ = nullptr;
@@ -152,7 +154,9 @@ private:
 
     // Upvalue scanning
     void collectNames(ASTNode* n, std::unordered_set<std::string>& names);
+    void collectNamesRaw(ASTNode* n, std::unordered_set<std::string>& names);
     void collectLocals(ASTNode* n, std::unordered_set<std::string>& locals);
+    void collectExplicitLocals(ASTNode* n, std::unordered_set<std::string>& locals);
     void scanUpvalues(ASTNode* body,
                       const std::unordered_set<std::string>& outerLocals);
     void scanUpvaluesNode(ASTNode* n,

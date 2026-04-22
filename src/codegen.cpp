@@ -66,6 +66,8 @@ void LLVMCodeGen::declareRT() {
     rtMax_      = mkRT("alpha_rt_max",                avp,   {avp, avp});
     rtMin_      = mkRT("alpha_rt_min",                avp,   {avp, avp});
     rtPow_      = mkRT("alpha_rt_pow",                avp,   {avp, avp});
+    rtStrLen_   = mkRT("alpha_rt_strlen",             avp,   {avp});
+    rtStrChar_  = mkRT("alpha_rt_strchar",            avp,   {avp, avp});
     rtMakeNil_  = mkRT("alpha_rt_make_nil",           avp,   {});
     rtMakeNum_  = mkRT("alpha_rt_make_number",        avp,   {dblt()});
     rtMakeBool_ = mkRT("alpha_rt_make_bool",          avp,   {i32t()});
@@ -406,7 +408,7 @@ llvm::Value* LLVMCodeGen::genCall(ASTNode* n) {
         if (nm == "input")                                return builder_.CreateCall(rtInput_,    {});
         if (nm == "typeof"      && args.size()==1)        return builder_.CreateCall(rtTypeof_,   {args[0]});
         if (nm == "tostring"    && args.size()==1)        return builder_.CreateCall(rtToString_, {args[0]});
-        if (nm == "strtonum"    && args.size()==1)        return builder_.CreateCall(rtToString_, {args[0]});
+        if (nm == "strtonum"    && args.size()==1)        return builder_.CreateCall(rtTonum_,    {args[0]});
         if (nm == "sqrt"        && args.size()==1)        return builder_.CreateCall(rtSqrt_,     {args[0]});
         if (nm == "cos"         && args.size()==1)        return builder_.CreateCall(rtCos_,      {args[0]});
         if (nm == "sin"         && args.size()==1)        return builder_.CreateCall(rtSin_,      {args[0]});
@@ -416,6 +418,8 @@ llvm::Value* LLVMCodeGen::genCall(ASTNode* n) {
         if (nm == "max"         && args.size()==2)        return builder_.CreateCall(rtMax_,      {args[0], args[1]});
         if (nm == "min"         && args.size()==2)        return builder_.CreateCall(rtMin_,      {args[0], args[1]});
         if (nm == "pow"         && args.size()==2)        return builder_.CreateCall(rtPow_,      {args[0], args[1]});
+        if (nm == "strlen"      && args.size()==1)        return builder_.CreateCall(rtStrLen_,   {args[0]});
+        if (nm == "strchar"     && args.size()==2)        return builder_.CreateCall(rtStrChar_,  {args[0], args[1]});
         if (nm == "objectmemberkeys"   && args.size()==1) return builder_.CreateCall(rtObjKeys_,  {args[0]});
         if (nm == "objecttotalmembers" && args.size()==1) return builder_.CreateCall(rtObjTotal_, {args[0]});
         if (nm == "objectcopy"         && args.size()==1) return builder_.CreateCall(rtObjCopy_,  {args[0]});
@@ -585,8 +589,32 @@ llvm::GlobalVariable* LLVMCodeGen::getOrCreateGlobal(const std::string& name) {
 void LLVMCodeGen::collectNames(ASTNode* n, std::unordered_set<std::string>& names) {
     if (!n) return;
     if (n->kind == NodeKind::IdExpr) { names.insert(n->sval); return; }
-    if (n->kind == NodeKind::FuncDef || n->kind == NodeKind::LambdaDef) return;
+    if (n->kind == NodeKind::FuncDef || n->kind == NodeKind::LambdaDef) {
+        // Descend INTO nested functions to find names they reference —
+        // those may be upvalues from the outer scope.
+        // But skip names that are locally defined inside (formals + locals).
+        std::unordered_set<std::string> innerLocals;
+        if (!n->children.empty())
+            for (auto& fp : n->children[0]->children)
+                innerLocals.insert(fp->sval);
+        ASTNode* innerBody = n->children.back().get();
+        collectLocals(innerBody, innerLocals);
+        // Collect names used inside, filtering out the inner function's own locals
+        std::unordered_set<std::string> innerNames;
+        for (auto& c : n->children) collectNamesRaw(c.get(), innerNames);
+        for (auto& nm : innerNames)
+            if (!innerLocals.count(nm))
+                names.insert(nm);
+        return;
+    }
     for (auto& c : n->children) collectNames(c.get(), names);
+}
+
+// Raw name collection — descends everywhere without filtering
+void LLVMCodeGen::collectNamesRaw(ASTNode* n, std::unordered_set<std::string>& names) {
+    if (!n) return;
+    if (n->kind == NodeKind::IdExpr) { names.insert(n->sval); return; }
+    for (auto& c : n->children) collectNamesRaw(c.get(), names);
 }
 
 void LLVMCodeGen::collectLocals(ASTNode* n, std::unordered_set<std::string>& locals) {
@@ -604,6 +632,18 @@ void LLVMCodeGen::collectLocals(ASTNode* n, std::unordered_set<std::string>& loc
     for (auto& c : n->children) collectLocals(c.get(), locals);
 }
 
+// Like collectLocals but only explicit 'local x' declarations — NOT bare assignments.
+// Used by scanUpvaluesNode to determine what a lambda truly owns vs captures.
+void LLVMCodeGen::collectExplicitLocals(ASTNode* n, std::unordered_set<std::string>& locals) {
+    if (!n) return;
+    if (n->kind == NodeKind::FuncDef || n->kind == NodeKind::LambdaDef) return;
+    if (n->kind == NodeKind::LocalDecl)
+        locals.insert(n->sval);
+    if (n->kind == NodeKind::IdExpr && n->isLocal)
+        locals.insert(n->sval);
+    for (auto& c : n->children) collectExplicitLocals(c.get(), locals);
+}
+
 void LLVMCodeGen::scanUpvalues(ASTNode* body,
                                 const std::unordered_set<std::string>& outerLocals) {
     if (!body) return;
@@ -618,14 +658,22 @@ void LLVMCodeGen::scanUpvaluesNode(ASTNode* n,
         std::unordered_set<std::string> innerNames;
         ASTNode* innerBody = n->children.back().get();
         collectNames(innerBody, innerNames);
+
+        // innerLocals = only formals + explicit 'local' declarations.
+        // Bare assignments (ok = false) are NOT local declarations —
+        // they may be writes to captured outer variables.
         std::unordered_set<std::string> innerLocals;
         if (!n->children.empty())
             for (auto& fp : n->children[0]->children)
                 innerLocals.insert(fp->sval);
-        collectLocals(innerBody, innerLocals);
+        collectExplicitLocals(innerBody, innerLocals);
+
         for (auto& nm : innerNames)
             if (outerLocals.count(nm) && !innerLocals.count(nm))
                 getOrCreateGlobal(nm);
+
+        // Also recurse into this lambda's body to catch doubly-nested captures
+        scanUpvalues(innerBody, outerLocals);
         return;
     }
     for (auto& c : n->children) scanUpvaluesNode(c.get(), outerLocals);
