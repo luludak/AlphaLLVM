@@ -259,7 +259,7 @@ docker run --rm -v $(pwd):/src alphac /src/test.alpha
 ```
 
 *Important Notes:*
-* This software was produced using Claude Code (Opus 4.6). It has not been tested to production-level code.
+* This software was produced using Claude Code (Sonnet 4.6). It has not been tested to production-level code.
 * While I aim developing and improving the project, it is provided AS-IS, without guarantees.
 * The concept of this project is inspired (although completely changed) by the compilers project I had implemented at CSD - UoC.
 * I used, to the best of my knowledge, only information that is already publicly available and without limitations (e.g., language syntax), as well as information from code that was my own.
