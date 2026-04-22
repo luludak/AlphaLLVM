@@ -2,6 +2,7 @@
 
 A scripting language compiler, implemented in modern C++17 with an LLVM backend. Supports both JIT execution via OrcJIT and ahead-of-time compilation to native object files.
 
+
 ---
 
 ## Features
@@ -259,6 +260,25 @@ make -j$(nproc)
 ```bash
 docker build -t alphac .
 docker run --rm -v $(pwd):/src alphac /src/test.alpha
+```
+
+
+## Lines of Code
+```
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+C++                              4            152             71           1237
+yacc                             1             35              2            432
+C                                1             36             31            392
+C/C++ Header                     4             48             21            274
+Markdown                         1             41              0            133
+CMake                            1             13             18            107
+lex                              1             13              3             93
+make                             1             22             17             53
+-------------------------------------------------------------------------------
+SUM:                            14            360            163           2721
+-------------------------------------------------------------------------------
 ```
 
 *Important Notes:*
