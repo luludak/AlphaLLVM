@@ -1,0 +1,210 @@
+// ================================================================
+// mathcomp.alpha — Interactive math expression compiler
+// ================================================================
+
+function isDigit(ch) {
+    return ch == "0" or ch == "1" or ch == "2" or ch == "3" or
+           ch == "4" or ch == "5" or ch == "6" or ch == "7" or
+           ch == "8" or ch == "9";
+}
+
+function isSpace(ch) {
+    return ch == " " or ch == "\t";
+}
+
+function lex(src) {
+    local tokens = [];
+    local count  = 0;
+    local len    = strlen(src);
+    local i      = 0;
+
+    while (i < len) {
+        local ch = strchar(src, i);
+        if (isSpace(ch)) { i++; continue; }
+
+        if (isDigit(ch) or (ch == "." and i+1 < len and isDigit(strchar(src, i+1)))) {
+            local numStr = "";
+            local hasDot = false;
+            while (i < len) {
+                local c = strchar(src, i);
+                if (isDigit(c)) {
+                    numStr = numStr .. c; i++;
+                } else if (c == "." and not hasDot) {
+                    hasDot = true; numStr = numStr .. c; i++;
+                } else { break; }
+            }
+            tokens[count] = [kind: "num", value: numStr];
+            count++;
+            continue;
+        }
+
+        if (ch == "+") { tokens[count] = [kind: "op",     value: "+"]; count++; i++; continue; }
+        if (ch == "-") { tokens[count] = [kind: "op",     value: "-"]; count++; i++; continue; }
+        if (ch == "*") { tokens[count] = [kind: "op",     value: "*"]; count++; i++; continue; }
+        if (ch == "/") { tokens[count] = [kind: "op",     value: "/"]; count++; i++; continue; }
+        if (ch == "^") { tokens[count] = [kind: "op",     value: "^"]; count++; i++; continue; }
+        if (ch == "(") { tokens[count] = [kind: "lparen", value: "("]; count++; i++; continue; }
+        if (ch == ")") { tokens[count] = [kind: "rparen", value: ")"]; count++; i++; continue; }
+
+        print("Lexer error: unknown char '" .. ch .. "'");
+        i++;
+    }
+
+    tokens[count] = [kind: "end", value: ""];
+    count++;
+    return [tokens: tokens, count: count];
+}
+
+function parse(tokens) {
+    local pos    = 0;
+    local instrs = [];
+    local icount = 0;
+    local ok     = true;
+
+    local p = [];
+
+    function peek()    { return tokens[pos]; }
+    function advance() { local t = tokens[pos]; pos = pos + 1; return t; }
+    function emit(ins) { instrs[icount] = ins; icount = icount + 1; }
+
+    p.parseBase = lambda() {
+        local t = peek();
+
+        if (t.kind == "op" and t.value == "-") {
+            advance();
+            p.parseBase();
+            emit([op: "neg"]);
+            return;
+        }
+
+        if (t.kind == "lparen") {
+            advance();
+            p.parseExpr();
+            if (peek().kind != "rparen") {
+                print("Parse error: missing ')'");
+                ok = false;
+            } else {
+                advance();
+            }
+            return;
+        }
+
+        if (t.kind == "num") {
+            advance();
+            emit([op: "push", val: strtonum(t.value)]);
+            return;
+        }
+
+        print("Parse error: unexpected token '" .. t.kind .. "' '" .. t.value .. "'");
+        ok = false;
+    };
+
+    p.parseFactor = lambda() {
+        p.parseBase();
+        if (peek().kind == "op" and peek().value == "^") {
+            advance();
+            p.parseFactor();
+            emit([op: "pow"]);
+        }
+    };
+
+    p.parseTerm = lambda() {
+        p.parseFactor();
+        while (peek().kind == "op" and
+               (peek().value == "*" or peek().value == "/")) {
+            local op = advance().value;
+            p.parseFactor();
+            if (op == "*") { emit([op: "mul"]); }
+            else           { emit([op: "div"]); }
+        }
+    };
+
+    p.parseExpr = lambda() {
+        p.parseTerm();
+        while (peek().kind == "op" and
+               (peek().value == "+" or peek().value == "-")) {
+            local op = advance().value;
+            p.parseTerm();
+            if (op == "+") { emit([op: "add"]); }
+            else           { emit([op: "sub"]); }
+        }
+    };
+
+    p.parseExpr();
+
+    if (peek().kind != "end") {
+        print("Parse error: unexpected '" .. peek().value .. "'");
+        ok = false;
+    }
+
+    return [instrs: instrs, count: icount, ok: ok];
+}
+
+function disassemble(instrs, count) {
+    print("Bytecode:");
+    local i = 0;
+    while (i < count) {
+        local ins = instrs[i];
+        if (ins.op == "push") {
+            print("  " .. i .. "  PUSH  " .. ins.val);
+        } else {
+            print("  " .. i .. "  " .. ins.op);
+        }
+        i = i + 1;
+    }
+}
+
+function execute(instrs, count) {
+    local stack = [];
+    local sp    = 0;
+    local i     = 0;
+
+    while (i < count) {
+        local ins = instrs[i];
+        local op  = ins.op;
+
+        if (op == "push") { stack[sp] = ins.val; sp = sp + 1; }
+        if (op == "neg")  { sp = sp - 1; stack[sp] = -(stack[sp]); sp = sp + 1; }
+        if (op == "add")  { sp = sp - 1; local b = stack[sp]; sp = sp - 1; local a = stack[sp]; stack[sp] = a + b; sp = sp + 1; }
+        if (op == "sub")  { sp = sp - 1; local b = stack[sp]; sp = sp - 1; local a = stack[sp]; stack[sp] = a - b; sp = sp + 1; }
+        if (op == "mul")  { sp = sp - 1; local b = stack[sp]; sp = sp - 1; local a = stack[sp]; stack[sp] = a * b; sp = sp + 1; }
+        if (op == "div")  {
+            sp = sp - 1; local b = stack[sp]; sp = sp - 1; local a = stack[sp];
+            if (b == 0) { print("Error: division by zero"); return nil; }
+            stack[sp] = a / b; sp = sp + 1;
+        }
+        if (op == "pow")  { sp = sp - 1; local b = stack[sp]; sp = sp - 1; local a = stack[sp]; stack[sp] = pow(a, b); sp = sp + 1; }
+        i = i + 1;
+    }
+
+    if (sp != 1) { print("Error: stack imbalance"); return nil; }
+    return stack[0];
+}
+
+function compileAndRun(src) {
+    local lexed  = lex(src);
+    local result = parse(lexed.tokens);
+
+    if (not result.ok) { return; }
+
+    disassemble(result.instrs, result.count);
+    local val = execute(result.instrs, result.count);
+    if (val != nil) {
+        print("= " .. val);
+    }
+}
+
+print("Math Compiler — enter an expression (e.g.  5 + 2 * 3)");
+print("Type 'quit' to exit.");
+print("");
+
+while (true) {
+    print("> ");
+    local line = input();
+    if (line == "quit" or line == "exit") { break; }
+    if (line == "") { continue; }
+    compileAndRun(line);
+    print("");
+}
+
+print("Bye.");
