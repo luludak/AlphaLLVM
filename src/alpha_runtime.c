@@ -72,11 +72,6 @@ static AlphaVal* av_table(AlphaTable* t) {
     return v;
 }
 
-static double av_tonum(const AlphaVal* v) {
-    double d = 0;
-    if (v->tag == TAG_NUMBER) { memcpy(&d, &v->data, sizeof(double)); }
-    return d;
-}
 static const char* av_tostr_raw(const AlphaVal* v) {
     const char* s = NULL;
     if (v->tag == TAG_STRING) { memcpy(&s, &v->data, sizeof(char*)); }
@@ -396,6 +391,14 @@ AlphaVal* alpha_rt_sin(AlphaVal* v) {
     if (!v || v->tag != TAG_NUMBER) return av_nil();
     double d; memcpy(&d, &v->data, sizeof(double));
     return av_number(sin(d));
+}
+AlphaVal* alpha_rt_pow(AlphaVal* base, AlphaVal* exp) {
+    if (!base || base->tag != TAG_NUMBER) return av_nil();
+    if (!exp  || exp->tag  != TAG_NUMBER) return av_nil();
+    double b, e;
+    memcpy(&b, &base->data, sizeof(double));
+    memcpy(&e, &exp->data,  sizeof(double));
+    return av_number(pow(b, e));
 }
 
 /* ---- totalarguments / argument: no variadic support yet, stubs ---- */

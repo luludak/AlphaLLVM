@@ -70,6 +70,7 @@ public:
     llvm::Function* rtAbs_      = nullptr;
     llvm::Function* rtMax_      = nullptr;
     llvm::Function* rtMin_      = nullptr;
+    llvm::Function* rtPow_      = nullptr;
     llvm::Function* rtMakeNil_  = nullptr;
     llvm::Function* rtMakeNum_  = nullptr;
     llvm::Function* rtMakeBool_ = nullptr;

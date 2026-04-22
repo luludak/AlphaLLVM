@@ -65,6 +65,7 @@ void LLVMCodeGen::declareRT() {
     rtAbs_      = mkRT("alpha_rt_abs",                avp,   {avp});
     rtMax_      = mkRT("alpha_rt_max",                avp,   {avp, avp});
     rtMin_      = mkRT("alpha_rt_min",                avp,   {avp, avp});
+    rtPow_      = mkRT("alpha_rt_pow",                avp,   {avp, avp});
     rtMakeNil_  = mkRT("alpha_rt_make_nil",           avp,   {});
     rtMakeNum_  = mkRT("alpha_rt_make_number",        avp,   {dblt()});
     rtMakeBool_ = mkRT("alpha_rt_make_bool",          avp,   {i32t()});
@@ -414,6 +415,7 @@ llvm::Value* LLVMCodeGen::genCall(ASTNode* n) {
         if (nm == "abs"         && args.size()==1)        return builder_.CreateCall(rtAbs_,      {args[0]});
         if (nm == "max"         && args.size()==2)        return builder_.CreateCall(rtMax_,      {args[0], args[1]});
         if (nm == "min"         && args.size()==2)        return builder_.CreateCall(rtMin_,      {args[0], args[1]});
+        if (nm == "pow"         && args.size()==2)        return builder_.CreateCall(rtPow_,      {args[0], args[1]});
         if (nm == "objectmemberkeys"   && args.size()==1) return builder_.CreateCall(rtObjKeys_,  {args[0]});
         if (nm == "objecttotalmembers" && args.size()==1) return builder_.CreateCall(rtObjTotal_, {args[0]});
         if (nm == "objectcopy"         && args.size()==1) return builder_.CreateCall(rtObjCopy_,  {args[0]});
