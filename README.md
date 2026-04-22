@@ -85,7 +85,8 @@ LLVM IR Code Generator
 | `Makefile` | GNU Make fallback |
 | `Dockerfile` | Reproducible build container |
 | `alpha-run.sh` | Shell script for JIT (`--run`) and AOT (`--aot`) pipelines |
-| `test.alpha` | 20-section test covering every language feature |
+| `examples/mathcomp.alpha` | A mathematical expression compiler (PoC). |
+| `examples/test.alpha` | 20-section test covering every language feature |
 | `examples/linked_list.alpha` | Linked list with `map`, `filter`, `foldLeft` |
 | `examples/mergesort.alpha` | In-place merge sort with randomized correctness check |
 | `examples/oop.alpha` | Prototype-based OOP — shapes, method override, bounded counter |
