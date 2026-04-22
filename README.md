@@ -287,6 +287,6 @@ SUM:                            14            360            163           2721
 *Important Notes:*
 * This software was produced using Claude Code (Sonnet 4.6). It has not been tested to production-level code.
 * While I aim developing and improving the project, it is provided AS-IS, without guarantees.
-* The concept of this project is inspired (although considerably changed) by the compilers project I had implemented at CSD - UoC.
+* The concept of this project is inspired (although considerably changed) by the compilers project me and my fellow colleagues had implemented at CSD - UoC as undergrads.
 * I used, to the best of my knowledge, only information that is already publicly available and without limitations (e.g., language syntax), as well as information from code that was my own.
 * I am **against** any usage of the project for plagiarism purposes (e.g., copying it arbitrarily on university projects). However, if you want to use it as the base for a tool to LEGITIMATELY learn how to build a compiler, then you can do so.
